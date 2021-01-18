@@ -1,0 +1,20 @@
+FROM python:3.7.9-buster
+
+ARG SCRIPT_NAME
+ADD $SCRIPT_NAME $SCRIPT_NAME
+ADD database.py database.py
+ADD circuit_breaker.py circuit_breaker.py
+ADD rabbitmq.py rabbitmq.py
+ADD requirements.txt requirements.txt
+
+RUN pip install -r requirements.txt
+ENV SCRIPT_NAME=$SCRIPT_NAME
+
+ARG WARRANTY_SERVICE_URL
+ARG WAREHOUSE_SERVICE_URL
+ARG ORDER_SERVICE_URL
+ENV WARRANTY_SERVICE_URL=$WARRANTY_SERVICE_URL
+ENV WAREHOUSE_SERVICE_URL=$WAREHOUSE_SERVICE_URL
+ENV ORDER_SERVICE_URL=$ORDER_SERVICE_URL
+
+CMD python $SCRIPT_NAME

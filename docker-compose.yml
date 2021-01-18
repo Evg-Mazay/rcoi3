@@ -1,0 +1,32 @@
+# 28.11.20 На мак не установился докер - временно забью на compose
+# Буду поднимать сразу на Heroku
+#
+
+version: "3.8"
+services:
+  postgres:
+    image: postgres:latest
+
+  order_service:
+    build:
+      args:
+        SCRIPT_NAME: order_service.py
+      context: .
+
+  store_service:
+    build:
+      args:
+        SCRIPT_NAME: store_service.py
+      context: .
+
+  warehouse_service:
+    build:
+      args:
+        SCRIPT_NAME: warehouse_service.py
+      context: .
+
+  warranty_service:
+    build:
+      args:
+        SCRIPT_NAME: warranty_service.py
+      context: .

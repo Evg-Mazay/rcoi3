@@ -1,0 +1,98 @@
+name: Build project
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      # unit tests
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Test with pytest
+        run: |
+          pytest -vv
+
+      # warranty service deploy
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          # stop looking on my api key >:(  go away
+          heroku_api_key: 50ab4447-e881-4c29-8e40-d654140e0cc9
+          heroku_app_name: "rcoi-2-warranty"
+          heroku_email: "evgenij997@yandex.ru"
+          usedocker: true
+          docker_build_args: |
+            SCRIPT_NAME
+        env:
+          SCRIPT_NAME: warranty_service.py
+
+      # warehouse service deploy
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          # stop looking on my api key >:(  go away
+          heroku_api_key: 50ab4447-e881-4c29-8e40-d654140e0cc9
+          heroku_app_name: "rcoi-2-warehouse"
+          heroku_email: "evgenij997@yandex.ru"
+          usedocker: true
+          docker_build_args: |
+            SCRIPT_NAME
+            WARRANTY_SERVICE_URL
+        env:
+          SCRIPT_NAME: warehouse_service.py
+          WARRANTY_SERVICE_URL: rcoi-2-warranty.herokuapp.com
+
+      # order service deploy
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          # stop looking on my api key >:(  go away
+          heroku_api_key: 50ab4447-e881-4c29-8e40-d654140e0cc9
+          heroku_app_name: "rcoi-2-order"
+          heroku_email: "evgenij997@yandex.ru"
+          usedocker: true
+          docker_build_args: |
+            SCRIPT_NAME
+            WARRANTY_SERVICE_URL
+            WAREHOUSE_SERVICE_URL
+        env:
+          SCRIPT_NAME: order_service.py
+          WARRANTY_SERVICE_URL: rcoi-2-warranty.herokuapp.com
+          WAREHOUSE_SERVICE_URL: rcoi-2-warehouse.herokuapp.com
+
+      # store service deploy
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          # stop looking on my api key >:(  go away
+          heroku_api_key: 50ab4447-e881-4c29-8e40-d654140e0cc9
+          heroku_app_name: "rcoi-2-store"
+          heroku_email: "evgenij997@yandex.ru"
+          usedocker: true
+          docker_build_args: |
+            SCRIPT_NAME
+            WARRANTY_SERVICE_URL
+            WAREHOUSE_SERVICE_URL
+            ORDER_SERVICE_URL
+        env:
+          SCRIPT_NAME: store_service.py
+          WARRANTY_SERVICE_URL: rcoi-2-warranty.herokuapp.com
+          WAREHOUSE_SERVICE_URL: rcoi-2-warehouse.herokuapp.com
+          ORDER_SERVICE_URL: rcoi-2-order.herokuapp.com
+
+      # run tests
+      - name: Run API Tests
+        id: run-newman
+        uses: anthonyvscode/newman-action@v1
+        with:
+          collection: postman/postman-collection.json
+          environment: postman/postman-heroku-environment.json
+          delayRequest: 50
+          reporters: cli
